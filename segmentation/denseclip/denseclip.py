@@ -10,6 +10,8 @@ from mmseg.models.segmentors.base import BaseSegmentor
 
 from .untils import tokenize
 
+import os
+
 
 @SEGMENTORS.register_module()
 class DenseCLIP(BaseSegmentor):
@@ -82,7 +84,16 @@ class DenseCLIP(BaseSegmentor):
 
         self.texts = torch.cat([tokenize(c, context_length=self.context_length) for c in class_names])
         self.num_classes = len(self.texts)
+        
+        # 디버깅 코드
+        # print(f"[DEBUG][INIT] class_names: {class_names}")
+        # print(f"[DEBUG][INIT] self.texts shape: {self.texts.shape}")  # Expect: (14, 16)
 
+        # debugging code for checking context_length
+        # if hasattr(self.text_encoder, 'positional_embedding'):
+        #     pos_embed = self.text_encoder.positional_embedding
+        #     print(f"[DEBUG][INIT] text_encoder.positional_embedding shape: {pos_embed.shape}")
+        #     print(f"[DEBUG][INIT] expected context length: {self.texts.shape[1]}")
 
         context_length = self.text_encoder.context_length - self.context_length
         self.contexts = nn.Parameter(torch.randn(1, context_length, token_embed_dim))
@@ -182,6 +193,19 @@ class DenseCLIP(BaseSegmentor):
         text_diff = self.context_decoder(text_embeddings, visual_context)
         # (B, K, C)
         text_embeddings = text_embeddings + self.gamma * text_diff
+        
+        # DenseCLIP이 BTCV dataset에 대해 생성한 class-specific text embedding을 .pth 파일로 저장하기 위한 코드
+        # if not hasattr(self, '_saved_text_embedding'):  # 중복 저장 방지
+        #     save_path = os.path.join('./work_dirs', 'btc_text_embeddings.pth')
+        #     torch.save(text_embeddings[0].detach().cpu(), save_path)  # B=1로 가정
+        #     print(f"[DEBUG] Saved BTCV text embeddings to {save_path}")
+        #     self._saved_text_embedding = True
+            
+        # debugging
+        # print(f"[DEBUG][TEXT_ENCODER] self.texts shape: {self.texts.shape}")
+        # print(f"[DEBUG][TEXT_ENCODER] self.contexts shape: {self.contexts.shape}")
+        # print(f"[DEBUG][TEXT_ENCODER] text_embeddings shape: {text_embeddings.shape}")
+        # print(f"[DEBUG][TEXT_ENCODER] global_feat shape: {global_feat.shape}")
 
         # compute score map and concat
         B, K, C = text_embeddings.shape

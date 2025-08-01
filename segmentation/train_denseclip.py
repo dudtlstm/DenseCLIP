@@ -14,7 +14,6 @@ from mmseg.models import build_segmentor
 from mmseg.utils import collect_env, get_root_logger
 import denseclip
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a segmentor')
     parser.add_argument('config', help='train config file path')
@@ -129,6 +128,33 @@ def main():
 
     datasets = [build_dataset(cfg.data.train)]
 
+    # [DEBUG] Sanity check for shape
+    from mmcv.parallel import collate, scatter
+
+    loader_cfg = cfg.data.train_dataloader if 'train_dataloader' in cfg.data else dict(samples_per_gpu=1, workers_per_gpu=1)
+    loader_cfg.setdefault('samples_per_gpu', 1)
+    loader_cfg.setdefault('workers_per_gpu', 1)
+
+    from mmseg.datasets import build_dataloader
+    data_loader = build_dataloader(
+        datasets[0],
+        samples_per_gpu=loader_cfg['samples_per_gpu'],
+        workers_per_gpu=loader_cfg['workers_per_gpu'],
+        dist=distributed,
+        shuffle=True)
+
+ 
+    for i in range(3):
+        sample = datasets[0][i]
+        img = sample['img'].data
+        gt = sample['gt_semantic_seg'].data
+
+        if isinstance(img, list):
+            img = img[0]
+        if isinstance(gt, list):
+            gt = gt[0]
+
+        print(f"[DEBUG] Sample {i}: img {img.shape}, gt {gt.shape}")
 
     if 'DenseCLIP' in cfg.model.type:
         cfg.model.class_names = list(datasets[0].CLASSES)

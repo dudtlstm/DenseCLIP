@@ -749,12 +749,30 @@ class ContextDecoder(nn.Module):
             nn.init.constant_(m.weight, 1.0)
 
     
+    # def forward(self, text, visual):
+    #     B, N, C = visual.shape
+    #     visual = self.memory_proj(visual)
+    #     x = self.text_proj(text)
+
+    #     for layer in self.decoder:
+    #         x = layer(x, visual)
+        
+    #     return self.out_proj(x)
     def forward(self, text, visual):
+        # print("ContextDecoder input text:", text.shape)
+        # print("ContextDecoder input visual:", visual.shape)
+
         B, N, C = visual.shape
         visual = self.memory_proj(visual)
         x = self.text_proj(text)
 
-        for layer in self.decoder:
+        # print("Projected visual:", visual.shape)
+        # print("Projected text:", x.shape)
+
+        for i, layer in enumerate(self.decoder):
             x = layer(x, visual)
+            # print(f"After decoder layer {i}: {x.shape}")
         
-        return self.out_proj(x)
+        x = self.out_proj(x)
+        # print("ContextDecoder output:", x.shape)
+        return x

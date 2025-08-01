@@ -1,15 +1,17 @@
-# dataset settings
-dataset_type = 'ADE20KDataset'
-data_root='/home/ys1024/DenseCLIP/data/ade/ADEChallengeData2016'
-IMG_MEAN = [ v*255 for v in [0.48145466, 0.4578275, 0.40821073]]
-IMG_VAR = [ v*255 for v in [0.26862954, 0.26130258, 0.27577711]]
+dataset_type = 'BTCVDataset'
+data_root='/home/ys1024/DenseCLIP/data/BTCV'
 
-img_norm_cfg = dict(mean=IMG_MEAN, std=IMG_VAR, to_rgb=True)
+img_norm_cfg = dict( # RGB 형식 (512, 512, 3)으로 저장되어 있으므로 이렇게 사용
+    mean=[123.675, 116.28, 103.53],
+    std=[58.395, 57.12, 57.375],
+    to_rgb=True)
+
 crop_size = (512, 512)
+
 train_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations', reduce_zero_label=True),
-    dict(type='Resize', img_scale=(2048, 512), ratio_range=(0.5, 2.0)),
+    dict(type='LoadNpzAnnotations', reduce_zero_label=False),
+    dict(type='Resize', img_scale=(512, 512), ratio_range=(0.5, 2.0)),
     dict(type='RandomCrop', crop_size=crop_size, cat_max_ratio=0.75),
     dict(type='RandomFlip', prob=0.5),
     dict(type='PhotoMetricDistortion'),
@@ -18,12 +20,13 @@ train_pipeline = [
     dict(type='DefaultFormatBundle'),
     dict(type='Collect', keys=['img', 'gt_semantic_seg']),
 ]
+
 test_pipeline = [
     dict(type='LoadImageFromFile'),
+    # dict(type='LoadNpzAnnotations'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(2048, 512),
-        #img_ratios=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75],
+        img_scale=(512, 512),
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -33,6 +36,8 @@ test_pipeline = [
             dict(type='Collect', keys=['img']),
         ])
 ]
+
+
 data = dict(
     samples_per_gpu=4,
     workers_per_gpu=4,
@@ -41,16 +46,26 @@ data = dict(
         data_root=data_root,
         img_dir='images/training',
         ann_dir='annotations/training',
+        split='train.txt',
+        img_suffix='.png',
+        seg_map_suffix='.npz',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
         data_root=data_root,
         img_dir='images/validation',
         ann_dir='annotations/validation',
+        split='val.txt',
+        img_suffix='.png',
+        seg_map_suffix='.npz',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
         data_root=data_root,
         img_dir='images/validation',
         ann_dir='annotations/validation',
-        pipeline=test_pipeline))
+        split='val.txt',
+        img_suffix='.png',
+        seg_map_suffix='.npz',
+        pipeline=test_pipeline),
+)
