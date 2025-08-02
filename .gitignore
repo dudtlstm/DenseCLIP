@@ -4,3 +4,4 @@ __pycache__
 work_dirs
 *.pth
 data
+*.pt
