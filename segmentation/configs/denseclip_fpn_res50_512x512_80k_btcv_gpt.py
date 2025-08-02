@@ -9,7 +9,7 @@ _base_ = [
 model = dict(
     type='DenseCLIP',
     pretrained='pretrained/RN50.pt',
-    context_length=12,
+    context_length=32,
     text_head=False,
     backbone=dict(
         type='CLIPResNetWithAttention',
@@ -20,7 +20,7 @@ model = dict(
 
     text_encoder=dict(
         type='CLIPTextContextEncoder',
-        context_length=16,
+        context_length=35,
         embed_dim=1024,
         transformer_width=512,
         transformer_heads=8,

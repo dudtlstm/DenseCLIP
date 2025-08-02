@@ -1,3 +1,4 @@
+# DenseCLIP/segmentation/configs/_base_/datasets/btcv.py
 dataset_type = 'BTCVDataset'
 data_root='/home/ys1024/DenseCLIP/data/BTCV'
 

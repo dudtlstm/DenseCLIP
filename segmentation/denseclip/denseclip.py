@@ -95,6 +95,16 @@ class DenseCLIP(BaseSegmentor):
         #     print(f"[DEBUG][INIT] text_encoder.positional_embedding shape: {pos_embed.shape}")
         #     print(f"[DEBUG][INIT] expected context length: {self.texts.shape[1]}")
 
+        # 디버깅: rank 정보와 함께 class_names 출력
+        import torch.distributed as dist
+        if dist.is_available() and dist.is_initialized():
+            rank = dist.get_rank()
+        else:
+            rank = 0
+
+        print(f"[DEBUG] RANK {rank} - class_names length: {len(class_names)}")
+        print(f"[DEBUG] RANK {rank} - class_names[0]: {class_names[0] if len(class_names) > 0 else 'EMPTY'}")
+        
         context_length = self.text_encoder.context_length - self.context_length
         self.contexts = nn.Parameter(torch.randn(1, context_length, token_embed_dim))
         nn.init.trunc_normal_(self.contexts)
